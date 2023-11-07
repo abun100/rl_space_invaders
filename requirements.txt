@@ -1,0 +1,18 @@
+ale-py==0.8.1
+AutoROM==0.4.2
+AutoROM.accept-rom-license==0.6.1
+certifi==2023.7.22
+charset-normalizer==3.3.2
+click==8.1.7
+cloudpickle==3.0.0
+Farama-Notifications==0.0.4
+-e git+ssh://git@github.com/abun100/rl_space_invaders.git@df467f7dba2c63c1f4d88064b2faad71e4fd2614#egg=final_project
+gymnasium==0.29.1
+idna==3.4
+importlib-resources==6.1.1
+numpy==1.26.1
+requests==2.31.0
+Shimmy==0.2.1
+tqdm==4.66.1
+typing_extensions==4.8.0
+urllib3==2.0.7
