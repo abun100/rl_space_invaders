@@ -11,8 +11,14 @@ pip install -e .
 ### If using vscode and your editor shows is not able to find the project dependencies
 Follow the instructions [here](https://code.visualstudio.com/docs/python/environments#_working-with-python-interpreters) to change the python interpreter used by the editor. Make sure you select the interpreter of the virtual environment you created when installing the project.
 
-### Before you push changes to the remote repo make sure 
+## Run
+```sh
+python run.py --render_mode=human
+```
+
+## Before you push changes to the remote repo make sure 
 
 1. You are not adding unnecessary dependencies to the project. 
 2. `requirements.txt` file is up to date.
 3. Everything works.
+4. Verify you did not unintentionally over-write the model weights.
