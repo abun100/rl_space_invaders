@@ -8,7 +8,7 @@ from space_invaders import environment, model
 def run(args):
     q_func = load_q_func(args.model, args.weights)
 
-    x = np.random.rand(84, 84, 4).reshape((1, 84, 84, 4))
+    x = np.random.rand(84, 84, 4) # 4 gray scale images of size 84x84 pixels
     y = q_func.predict(x)
     print(y.shape)
 
