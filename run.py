@@ -6,10 +6,10 @@ import numpy as np
 from space_invaders import environment, model
 
 def run(args):
-    model = load_model(args.model, args.weights)
+    q_func = load_q_func(args.model, args.weights)
 
     x = np.random.rand(84, 84, 4).reshape((1, 84, 84, 4))
-    y = model._model(x)
+    y = q_func.predict(x)
     print(y.shape)
 
     env = gym.make(
@@ -21,7 +21,7 @@ def run(args):
     )
     environment.run_game(env)
 
-def load_model(model_type: str, weights_file: str) -> model.Model:
+def load_q_func(model_type: str, weights_file: str) -> model.Model:
     m = model.DQNBasic()
     m.load(weights_file)
     

@@ -22,7 +22,7 @@ class Model():
         
         self._model.load_weights(filepath, by_name=True)
 
-    def predict(self, state: List) -> List:
+    def predict(self, state: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
     
     def fit(self, state: List, y: List) -> None:
@@ -61,3 +61,26 @@ class DQNBasic(Model):
         outputs = keras.layers.Dense(ACTIONS_SPACE, activation='linear')(x)
 
         return keras.Model(inputs=inputs, outputs=outputs)
+
+    def predict(self, state: np.ndarray) -> np.ndarray:
+        shape_error = Exception("expected input size is (None, 84, 84, 4) where None represents any batch size")
+        shape = state.shape
+        expected_shape = (84, 84, 4)
+
+        if len(shape) < 3:
+            raise shape_error
+        elif len(shape) == 3 and shape != expected_shape:
+            raise shape_error
+        elif len(shape) == 4 and shape[1:] != expected_shape:
+            raise shape_error
+        elif len(shape) > 4: raise shape_error
+
+        # Keras documentation recommends only using model.predict method when
+        # the predicting a batch of size > 1. Otherwise, model(x) is the best
+        # way of computing y.
+        x = state
+        if len(shape) == 3 or shape[0] == 1:
+            x = x.reshape((1, 84, 84, 4))
+            return self._model(x)
+        
+        return self._model.predict(x)
