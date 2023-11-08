@@ -1,11 +1,16 @@
 import argparse
 import os
 import gymnasium as gym
+import numpy as np
 
 from space_invaders import environment, model
 
 def run(args):
     model = load_model(args.model, args.weights)
+
+    x = np.random.rand(84, 84, 4).reshape((1, 84, 84, 4))
+    y = model._model(x)
+    print(y.shape)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',

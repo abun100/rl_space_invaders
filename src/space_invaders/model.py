@@ -3,6 +3,7 @@ from typing import List
 
 import numpy as np
 
+
 ACTIONS_SPACE = 6
 
 
@@ -54,8 +55,9 @@ class DQNBasic(Model):
             kernel_size=(4,4),
             strides=2,
             activation='relu')(x)
+        x = keras.layers.Flatten()(x)
         x = keras.layers.Dense(256, activation='relu')(x)
 
-        outputs = keras.layers.Dense(ACTIONS_SPACE)(x)
+        outputs = keras.layers.Dense(ACTIONS_SPACE, activation='linear')(x)
 
-        return keras.Model(inputs, outputs)
+        return keras.Model(inputs=inputs, outputs=outputs)
