@@ -5,7 +5,7 @@ import gymnasium as gym
 from space_invaders import environment, model
 
 def run(args):
-    model = load_model(args.model, args.weights, args.init_weights)
+    model = load_model(args.model, args.weights)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',
@@ -16,8 +16,11 @@ def run(args):
     )
     environment.run_game(env)
 
-def load_model(model_type: str, weights_file: str, init_weights: bool) -> model.Model:
-    return model.DQNGrayScale()
+def load_model(model_type: str, weights_file: str) -> model.Model:
+    m = model.DQNBasic()
+    m.load(weights_file)
+    
+    return m
 
 def parse_args():
     args = argparse.ArgumentParser()
@@ -27,9 +30,8 @@ def parse_args():
     args.add_argument('--obs_type', type=str, choices=['rgb', 'grayscale', 'ram'], default='grayscale')
 
     # Model configuration
-    args.add_argument('--init_weights', type=bool, default=False)
-    args.add_argument('--weights', type=str, default=os.path.join('data', 'weights.npy'))
-    args.add_argument('--model', type=str, choices=['dqn-grayscale'], default='dqn-grayscale')
+    args.add_argument('--weights', type=str, default=os.path.join('data', 'weights.h5'))
+    args.add_argument('--model', type=str, choices=['dqn-basic'], default='dqn-basic')
 
     return args.parse_args()
 
