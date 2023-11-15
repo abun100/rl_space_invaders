@@ -21,11 +21,16 @@ def run(args):
 def run_game(env, q_func):
     score = 0
     start = env.reset() #represents first state (very begining of game)
-    state = gameState.State(start)
 
-    print(state)
+    #creates our array of observations and preprocess them 
+    #we use start[0] to represent the observation image
+    state_frames = gameState.State(start[0]) 
 
-    state = np.random.rand(84, 84, 4)
+    #stacks our frames to frames in order to make -> (84,84,4)
+    stacked_frames = gameState.state_transformer(state_frames)
+
+    #set our state to the stacked_frames 
+    state = stacked_frames
 
     while True:
         # action_vector = q_func.predict(state_transformer(state))

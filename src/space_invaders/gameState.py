@@ -1,6 +1,5 @@
 import numpy as np
 from skimage import transform
-from skimage.color import rgb2gray
 
 # we need to initialize a state (4 gray scale consecutive observations
 # rescaled to 84x84 pixels)
@@ -30,11 +29,8 @@ def state_transformer(state : State):
     return np.stack(state.obs, axis=2)
 
 def process_frame(obs):
-    #turn rgb image -> gray scaled 
-    grayScale = rgb2gray(obs)
-
     #crop the screen to get rid not needed screen parts (ex. the area below player)
-    cropped_frame = grayScale[8:-12, 4:-12]
+    cropped_frame = obs[8:-12, 4:-12]
 
     #Normalize pixel values
     normalized = cropped_frame / 255.0
@@ -44,4 +40,5 @@ def process_frame(obs):
 
     #return 84 x 84 x 1 frame
     return preprocessed_frame
+
 
