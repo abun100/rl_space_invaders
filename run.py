@@ -3,14 +3,11 @@ import os
 import gymnasium as gym
 import numpy as np
 
-from space_invaders import environment, model
+from space_invaders import environment, model, gameState
+
 
 def run(args):
     q_func = load_q_func(args.model, args.weights)
-
-    x = np.random.rand(84, 84, 4) # 4 gray scale images of size 84x84 pixels
-    y = q_func.predict(x)
-    print(y.shape)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',
@@ -19,7 +16,38 @@ def run(args):
         full_action_space=True,
         obs_type=args.obs_type
     )
-    environment.run_game(env)
+    run_game(env, q_func)
+
+def run_game(env, q_func):
+    score = 0
+    start = env.reset() #represents first state (very begining of game)
+    state = gameState.State(start)
+
+    print(state)
+
+    state = np.random.rand(84, 84, 4)
+
+    while True:
+        # action_vector = q_func.predict(state_transformer(state))
+        action_vector = q_func.predict(state)
+
+        # Map action_vector to action
+        action = np.argmax(action_vector)
+
+        obs, reward, done, truncate, info = env.step(action)
+        score += reward
+
+        # With observation update state
+        # let assume that newob -> is a pre-processed obs from env
+        newob = np.random.rand(84, 84, 1)
+        state = np.concatenate((state[:,:,1:], newob), axis=2)
+
+        env.render()
+
+        if done:
+            env.close()
+            print(f'Score:{score}')
+            break
 
 def load_q_func(model_type: str, weights_file: str) -> model.Model:
     m = model.DQNBasic()

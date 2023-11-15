@@ -1,18 +1,3 @@
-def run_game(env):    
-    score = 0
-    env.reset()
-    
-    while True:
-        action = env.action_space.sample()
-        obs, reward, done, truncate, info = env.step(action)
-        score += reward
-        env.render()
-
-        if done:
-            env.close()
-            print(f'Score:{score}')
-            break
-
 def get_end_obs(env):
     """
     @return (array): ending observation image
