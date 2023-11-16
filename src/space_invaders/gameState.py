@@ -17,28 +17,27 @@ from skimage import transform
 # implement state_transformer(s: State) -> np.random.rand(84, 84, 4)
 
 class State:
-    def __init__(self, env):
-        self.obs = [process_frame(env) for i in range(4)]
+    def __init__(self, ob):
+        self.obs = [process_frame(ob) for _ in range(4)]
 
     def add_observation(self, newobs : np.ndarray):
         self.obs.pop(0)
-        self.obs.append(newobs)
+        self.obs.append(process_frame(newobs))
 
-
-def state_transformer(state : State):
-    return np.stack(state.obs, axis=2)
+    def to_numpy(self) -> np.ndarray:
+        return np.stack(self.obs, axis=2)
 
 def process_frame(obs):
-    #crop the screen to get rid not needed screen parts (ex. the area below player)
+    # crop the screen to get rid not needed screen parts (ex. the area below player)
     cropped_frame = obs[8:-12, 4:-12]
 
-    #Normalize pixel values
+    # Normalize pixel values
     normalized = cropped_frame / 255.0
 
-    #Resize to desired frame size
+    # Resize to desired frame size
     preprocessed_frame = transform.resize(normalized, [84,84])
 
-    #return 84 x 84 x 1 frame
+    # return 84 x 84 x 1 frame
     return preprocessed_frame
 
 

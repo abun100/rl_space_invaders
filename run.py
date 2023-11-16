@@ -3,7 +3,7 @@ import os
 import gymnasium as gym
 import numpy as np
 
-from space_invaders import environment, model, gameState
+from space_invaders import model, gameState
 
 
 def run(args):
@@ -20,32 +20,22 @@ def run(args):
 
 def run_game(env, q_func):
     score = 0
-    start = env.reset() #represents first state (very begining of game)
+    start = env.reset() # represents first state (very beginning of game)
 
-    #creates our array of observations and preprocess them 
-    #we use start[0] to represent the observation image
-    state_frames = gameState.State(start[0]) 
-
-    #stacks our frames to frames in order to make -> (84,84,4)
-    stacked_frames = gameState.state_transformer(state_frames)
-
-    #set our state to the stacked_frames 
-    state = stacked_frames
+    # Creates our array of observations and preprocess them 
+    # we use start[0] to represent the observation image
+    state = gameState.State(start[0])
 
     while True:
-        # action_vector = q_func.predict(state_transformer(state))
-        action_vector = q_func.predict(state)
+        action_vector = q_func.predict(state.to_numpy())
 
-        # Map action_vector to action
+        # map action_vector to action
         action = np.argmax(action_vector)
 
-        obs, reward, done, truncate, info = env.step(action)
+        obs, reward, done, _, _ = env.step(action)
         score += reward
 
-        # With observation update state
-        # let assume that newob -> is a pre-processed obs from env
-        newob = np.random.rand(84, 84, 1)
-        state = np.concatenate((state[:,:,1:], newob), axis=2)
+        state.add_observation(obs)
 
         env.render()
 
