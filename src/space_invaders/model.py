@@ -3,6 +3,8 @@ from typing import List
 
 import numpy as np
 
+from space_invaders.gameState import State
+
 
 ACTIONS_SPACE = 6
 
@@ -84,3 +86,9 @@ class DQNBasic(Model):
             return self._model(x)
         
         return self._model.predict(x)
+    
+def real_reward(reward:int, model:Model, ended:bool, state:State, Lambda = float) -> np.ndarray:
+    if ended:
+        return reward + Lambda * model.predict(state)
+    else:
+        return reward

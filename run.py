@@ -4,6 +4,7 @@ import gymnasium as gym
 import numpy as np
 
 from space_invaders import model, gameState
+from space_invaders.model import real_reward
 
 
 def run(args):
@@ -16,30 +17,37 @@ def run(args):
         full_action_space=True,
         obs_type=args.obs_type
     )
-    run_game(env, q_func)
 
-def run_game(env, q_func):
+    Lambda = 0.3
+
+    run_game(env, q_func, Lambda)
+
+def run_game(env, q_func, Lambda):
     score = 0
     start = env.reset() # represents first state (very beginning of game)
+    buff = []
 
     # Creates our array of observations and preprocess them 
     # we use start[0] to represent the observation image
     state = gameState.State(start[0])
 
     while True:
-        action_vector = q_func.predict(state.to_numpy())
+        s = state.to_numpy()
+        action_vector = q_func.predict(s)
 
         # map action_vector to action
         action = np.argmax(action_vector)
-
-        obs, reward, done, _, _ = env.step(action)
+        obs, reward, ended, _, _ = env.step(action)
         score += reward
 
         state.add_observation(obs)
+        y = real_reward(reward, q_func, ended, state, Lambda)
+
+        buff.append((s, y))
 
         env.render()
 
-        if done:
+        if ended:
             env.close()
             print(f'Score:{score}')
             break
