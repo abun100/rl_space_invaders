@@ -87,7 +87,7 @@ class DQNBasic(Model):
         
         return self._model.predict(x)
     
-def real_reward(reward:int, prediction, ended:bool, Lambda = float) -> np.ndarray:
+def real_reward(reward: int, prediction: np.ndarray, ended: bool, Lambda: float) -> np.ndarray:
     if ended:
         return reward + Lambda * prediction
     else:
