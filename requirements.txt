@@ -9,7 +9,6 @@ charset-normalizer==3.3.2
 click==8.1.7
 cloudpickle==3.0.0
 Farama-Notifications==0.0.4
--e git+ssh://git@github.com/abun100/rl_space_invaders.git@06c2c090c72b5eb413b39091abda0004489e6f2b#egg=final_project
 flatbuffers==23.5.26
 gast==0.5.4
 google-auth==2.23.4

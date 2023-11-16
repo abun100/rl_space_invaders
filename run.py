@@ -28,9 +28,7 @@ def run_game(env, q_func):
 
     #set our state to the stacked_frames 
     state = state_frames.obs
-
     
-
     while True:
         # action_vector = q_func.predict(state_transformer(state))
         action_vector = q_func.predict(state)
