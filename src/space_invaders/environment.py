@@ -48,17 +48,3 @@ def perform_action(action, env):
     obs, reward, done, truncate , info = env.step(action)
     
     return obs, reward, done, info
-
-def play_episodes(num_episodes):
-    """
-    Play multiple episodes and return the total scores achieved.
-    @param num_episodes (int): The number of episodes to play.
-    @return total_scores [float]: Total scores for each episode.
-    """
-
-    total_scores = []
-    for _ in range(num_episodes):
-        score = run_game()
-        total_scores.append(score)
-    
-    return total_scores
