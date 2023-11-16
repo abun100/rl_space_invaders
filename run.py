@@ -18,11 +18,11 @@ def run(args):
         obs_type=args.obs_type
     )
 
-    Lambda = 0.3
+    gamma = 0.3
 
-    run_game(env, q_func, Lambda)
+    run_game(env, q_func, gamma)
 
-def run_game(env, q_func, Lambda):
+def run_game(env, q_func, gamma):
     score = 0
     start = env.reset() # represents first state (very beginning of game)
     buff = []
@@ -42,7 +42,7 @@ def run_game(env, q_func, Lambda):
         sprime = state.to_numpy()
         action_vector = q_func.predict(sprime)
         
-        y = real_reward(reward, action_vector, ended, Lambda)
+        y = real_reward(reward, action_vector, ended, gamma)
         buff.append((s, y))
 
         s = sprime
