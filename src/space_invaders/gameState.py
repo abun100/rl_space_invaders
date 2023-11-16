@@ -1,5 +1,6 @@
 import numpy as np
 from skimage import transform
+from PIL import Image
 
 # we need to initialize a state (4 gray scale consecutive observations
 # rescaled to 84x84 pixels)
@@ -29,7 +30,7 @@ class State:
 
 def process_frame(obs):
     # crop the screen to get rid not needed screen parts (ex. the area below player)
-    cropped_frame = obs[8:-12, 4:-12]
+    cropped_frame = obs[24:-12, 16:-28]
 
     # Normalize pixel values
     normalized = cropped_frame / 255.0
