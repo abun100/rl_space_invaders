@@ -26,11 +26,10 @@ def run_game(env, q_func):
     #we use start[0] to represent the observation image
     state_frames = gameState.State(start[0]) 
 
-    #stacks our frames to frames in order to make -> (84,84,4)
-    stacked_frames = gameState.state_transformer(state_frames)
-
     #set our state to the stacked_frames 
-    state = stacked_frames
+    state = state_frames.obs
+
+    
 
     while True:
         # action_vector = q_func.predict(state_transformer(state))
@@ -44,7 +43,7 @@ def run_game(env, q_func):
 
         # With observation update state
         # let assume that newob -> is a pre-processed obs from env
-        newob = np.random.rand(84, 84, 1)
+        
         state = np.concatenate((state[:,:,1:], newob), axis=2)
 
         env.render()
