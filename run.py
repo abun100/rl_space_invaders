@@ -30,20 +30,22 @@ def run_game(env, q_func, Lambda):
     # Creates our array of observations and preprocess them 
     # we use start[0] to represent the observation image
     state = gameState.State(start[0])
+    s = state.to_numpy()
+    action_vector = q_func.predict(s)
 
     while True:
-        s = state.to_numpy()
-        action_vector = q_func.predict(s)
-
-        # map action_vector to action
         action = np.argmax(action_vector)
         obs, reward, ended, _, _ = env.step(action)
         score += reward
 
         state.add_observation(obs)
-        y = real_reward(reward, q_func, ended, state, Lambda)
-
+        sprime = state.to_numpy()
+        action_vector = q_func.predict(sprime)
+        
+        y = real_reward(reward, action_vector, ended, Lambda)
         buff.append((s, y))
+
+        s = sprime
 
         env.render()
 
