@@ -3,8 +3,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-from space_invaders.gameState import State
-
 
 ACTIONS_SPACE = 6
 
