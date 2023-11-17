@@ -1,5 +1,5 @@
 from tensorflow import keras
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -92,3 +92,6 @@ def real_reward(reward: int, prediction: np.ndarray, ended: bool, gamma: float) 
         return reward + gamma * prediction
     else:
         return reward
+
+def back_prop(model: Model, buff: List[Tuple[np.ndarray, float]]):
+    pass
