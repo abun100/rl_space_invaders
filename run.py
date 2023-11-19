@@ -16,7 +16,7 @@ def run(args):
         'ALE/SpaceInvaders-v5',
         render_mode=args.render_mode,
         repeat_action_probability=.25,
-        full_action_space=True,
+        full_action_space=False,
         obs_type=args.obs_type
     )
 
@@ -38,7 +38,7 @@ def run_game(
     ) -> None:
     score = 0
 
-    buff: ReplayBuff = [] # generated data to train the model over time
+    buff: ReplayBuff = ([], [], [], [], []) # generated data to train the model over time
 
     state, s = reset_env(env)
 
@@ -56,17 +56,11 @@ def run_game(
 
         state.add_observation(obs)
         sprime = state.to_numpy()
-        
-        buff.append((s, sprime, action, reward, ended))
-        
-        s = sprime
-
-        # keep the data buffer size under control
-        if len(buff) > buff_capacity:
-            buff.pop()
+        update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
+        s = sprime # !important this needs to occur after buff is updated
 
         # update weights
-        if train and len(buff) == buff_capacity:
+        if train and len(buff) >= buff_capacity:
             back_prop(q_func, buff, gamma)
 
         env.render()
@@ -79,6 +73,21 @@ def run_game(
         if truncated:
             state, s = reset_env(env)
 
+
+def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
+    # keep the data buffer size under control
+    if len(buff[0]) > cap:
+        for i in range(buff):
+            buff[i].pop()
+    
+    # add new observation
+    buff[0].append(s)
+    buff[1].append(sprime)
+    buff[2].append(action)
+    buff[3].append(reward)
+    buff[4].append(ended)
+
+
 def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
     # Create array of observations and preprocess them 
     # we use start[0] to represent one observation image
@@ -89,17 +98,19 @@ def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
     
     return [state, s]
 
+
 def load_q_func(model_type: str, weights_file: str) -> Model:
     m = model.DQNBasic()
     m.load(weights_file)
     
     return m
 
+
 def parse_args():
     args = argparse.ArgumentParser()
     
     # Env configuration
-    args.add_argument('--render_mode', type=str, choices=['human', 'rgb_array'], default='rgb_array')
+    args.add_argument('--render_mode', type=str, choices=['human', 'rgb_array'], default='human')
     args.add_argument('--obs_type', type=str, choices=['rgb', 'grayscale', 'ram'], default='grayscale')
 
     # Model configuration
@@ -108,6 +119,7 @@ def parse_args():
     args.add_argument('--train', type=bool, default=False)
 
     return args.parse_args()
+
 
 if __name__ == '__main__':
     args = parse_args()

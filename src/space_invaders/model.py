@@ -8,7 +8,7 @@ from space_invaders.gameState import StateFrames
 
 ACTIONS_SPACE = 6
 
-ReplayBuff = List[Tuple[StateFrames, StateFrames, Reward, Terminated, Action]]
+ReplayBuff = Tuple[List[StateFrames], List[StateFrames], List[Reward], List[Terminated], List[Action]]
 
 DiscountFactor = float # Discount factor on the computation of future rewards
 
@@ -94,22 +94,32 @@ class DQNBasic(Model):
 
 def expected_reward(
         q_func: Model,
-        s: StateFrames,
-        sprime: StateFrames,
-        action: Action,
-        reward: Reward,
-        isTerminalState: Terminated,
+        s: List[StateFrames],
+        sprime: List[StateFrames],
+        action: List[Action],
+        reward: List[Reward],
+        isTerminalState: List[Terminated],
         gamma: DiscountFactor
     ) -> np.ndarray:
-    r = q_func.predict(s)
+    """
+    Computes the expected reward on a batch of samples by leveraging 
+    vectorized operations
+    """
+    s = np.stack(s, axis=0)
+    y_hat = q_func.predict(s)
     
-    if isTerminalState:
-        r[action] = reward
-    else:
-        rprime = q_func.predict(sprime)
-        r[action] = reward + gamma * rprime[action]
-    
-    return r
+    sprime = np.stack(sprime, axis=0)
+    rprime = q_func.predict(sprime)
+
+    i = np.arange(y_hat.shape[0]) # Index hack to access all rows in the predictions
+    a = np.array(action) # The actions we are updating (columns of the predictions we will modify)
+
+    t = np.array(isTerminalState) == False
+
+    r = np.array(reward) + gamma * rprime[i, a] * t
+    y_hat[i, a] = r # We only update the y_hat of those actions we know exactly what the future looks like
+
+    return y_hat
 
 
 
