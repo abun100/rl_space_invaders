@@ -34,44 +34,43 @@ def run_game(
         epsilon: float,
         gamma: float,
         buff_capacity: int,
+        episodes: int = 1,
         train: bool = False
     ) -> None:
-    score = 0
-
     buff: ReplayBuff = ([], [], [], [], []) # generated data to train the model over time
 
-    state, s = reset_env(env)
+    for _ in range(episodes):
+        score = 0
+        state, s = reset_env(env)
+        while True:
+            action_vector = q_func.predict(s)
+            
+            action = None
+            if np.random.uniform() <= epsilon:
+                action = int(np.random.randint(0, 5))
+            else:
+                action = int(np.argmax(action_vector))
 
-    while True:
-        action_vector = q_func.predict(s)
-        
-        action = None
-        if np.random.uniform() <= epsilon:
-            action = int(np.random.randint(0, 5))
-        else:
-            action = int(np.argmax(action_vector))
+            obs, reward, ended, _, _ = env.step(action)
+            score += reward
 
-        obs, reward, ended, truncated, _ = env.step(action)
-        score += reward
+            state.add_observation(obs)
+            sprime = state.to_numpy()
+            update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
+            s = sprime # !important this needs to occur after buff is updated
 
-        state.add_observation(obs)
-        sprime = state.to_numpy()
-        update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
-        s = sprime # !important this needs to occur after buff is updated
+            # update weights
+            if train and len(buff) >= buff_capacity:
+                back_prop(q_func, buff, gamma)
 
-        # update weights
-        if train and len(buff) >= buff_capacity:
-            back_prop(q_func, buff, gamma)
+            env.render()
 
-        env.render()
-
-        if ended:
-            env.close()
-            print(f'Score:{score}')
-            break
-
-        if truncated:
-            state, s = reset_env(env)
+            if ended:
+                print(f'Score:{score}')
+                break
+    
+    env.close()
+            
 
 
 def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
