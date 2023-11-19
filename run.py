@@ -26,7 +26,7 @@ def run(args):
     # During training, we will maintain a dataset of size buff_capacity in memory
     buff_capacity = 500
 
-    run_game(env, q_func, epsilon, gamma, buff_capacity, args.train)
+    run_game(env, q_func, epsilon, gamma, buff_capacity, train=args.train)
 
 def run_game(
         env: gym.Env,
