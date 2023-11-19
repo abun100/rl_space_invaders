@@ -3,8 +3,10 @@ import os
 import gymnasium as gym
 import numpy as np
 
-from space_invaders import gameState, model
-from space_invaders.model import Model, real_reward, back_prop
+from space_invaders import model
+from space_invaders.gameState import StateFrames, State
+from space_invaders.model import DiscountFactor, Model, back_prop, ReplayBuff
+from typing import Tuple
 
 
 def run(args):
@@ -19,57 +21,53 @@ def run(args):
     )
 
     epsilon = 0.03 # With probability epsilon a random action will be selected
-    gamma = 0.3 # Discount factor on the computation of future rewards
+    gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
     buff_capacity = 500
 
     run_game(env, q_func, epsilon, gamma, buff_capacity, args.train)
 
-def run_game(env, q_func, epsilon, gamma, buff_capacity, train: bool = False):
+def run_game(
+        env: gym.Env,
+        q_func: Model,
+        epsilon: float,
+        gamma: float,
+        buff_capacity: int,
+        train: bool = False
+    ) -> None:
     score = 0
-    start = env.reset() # represents first state (very beginning of game)
-    buff = [] # generated data to train the model over time
 
-    # Creates our array of observations and preprocess them 
-    # we use start[0] to represent one observation image
-    state = gameState.State(start[0])
-    s = state.to_numpy()
-    action_vector = q_func.predict(s)
+    buff: ReplayBuff = [] # generated data to train the model over time
+
+    state, s = reset_env(env)
 
     while True:
+        action_vector = q_func.predict(s)
+        
         action = None
         if np.random.uniform() <= epsilon:
-            action = np.random.randint(0, 5)
+            action = int(np.random.randint(0, 5))
         else:
-            action = np.argmax(action_vector)
+            action = int(np.argmax(action_vector))
 
-        obs, reward, ended, _, _ = env.step(action)
+        obs, reward, ended, truncated, _ = env.step(action)
         score += reward
 
         state.add_observation(obs)
         sprime = state.to_numpy()
-        # we predict the future reward here to avoid doing this computation twice.
-        # (once for the playing loop and one for the dataset generation in real_reward function)
-        action_vector = q_func.predict(sprime)
         
-        # We want our model to learn to predict the future reward given a state s,
-        # for this we create a running dataset where our predictor is the 
-        # State at time t (s) and the response is a discounted sum of all future reward (y).
-        # Here we create a running dataset that we use to improve our model over time.
-        y = real_reward(reward, action_vector, ended, gamma)
-        buff.append((s, y))
+        buff.append((s, sprime, action, reward, ended))
+        
+        s = sprime
 
         # keep the data buffer size under control
         if len(buff) > buff_capacity:
             buff.pop()
 
-        # update weights and flush buffer
+        # update weights
         if train and len(buff) == buff_capacity:
-            back_prop(q_func, buff)
-            buff = []
-
-        s = sprime
+            back_prop(q_func, buff, gamma)
 
         env.render()
 
@@ -77,6 +75,19 @@ def run_game(env, q_func, epsilon, gamma, buff_capacity, train: bool = False):
             env.close()
             print(f'Score:{score}')
             break
+
+        if truncated:
+            state, s = reset_env(env)
+
+def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
+    # Create array of observations and preprocess them 
+    # we use start[0] to represent one observation image
+    
+    start = env.reset()
+    state = State(start[0])
+    s = state.to_numpy()
+    
+    return [state, s]
 
 def load_q_func(model_type: str, weights_file: str) -> Model:
     m = model.DQNBasic()

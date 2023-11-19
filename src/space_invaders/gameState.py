@@ -1,34 +1,24 @@
-import numpy as np
+from typing import List
 from skimage import transform
-from PIL import Image
 
-# we need to initialize a state (4 gray scale consecutive observations
-# rescaled to 84x84 pixels)
-#
-# class State:
-#    def __init__(self, env):
-#      # obs should be rbg images from the game
-#      self.obs = sample.4.times(env)
-#
-#    def add_observation(self, obs: np.ndarray) -> self
-#
-#
-# def state_transformer(s: State) -> np.ndarray
-#
-# implement state_transformer(s: State) -> np.random.rand(84, 84, 4)
+import numpy as np
+
+
+StateFrames = np.ndarray
+
 
 class State:
-    def __init__(self, ob):
+    def __init__(self, ob) -> None:
         self.obs = [process_frame(ob) for _ in range(4)]
 
-    def add_observation(self, newobs : np.ndarray):
+    def add_observation(self, newobs : np.ndarray) -> None:
         self.obs.pop(0)
         self.obs.append(process_frame(newobs))
 
-    def to_numpy(self) -> np.ndarray:
+    def to_numpy(self) -> StateFrames:
         return np.stack(self.obs, axis=2)
 
-def process_frame(obs):
+def process_frame(obs: np.ndarray) -> np.ndarray:
     # crop the screen to get rid not needed screen parts (ex. the area below player)
     cropped_frame = obs[24:-12, 16:-28]
 

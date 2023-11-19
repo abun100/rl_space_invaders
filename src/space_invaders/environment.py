@@ -1,3 +1,9 @@
+Action = int
+
+Reward = float
+
+Terminated = bool
+
 def get_end_obs(env):
     """
     @return (array): ending observation image

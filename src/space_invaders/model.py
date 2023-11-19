@@ -1,10 +1,16 @@
+import numpy as np
+
 from tensorflow import keras
 from typing import List, Tuple
-
-import numpy as np
+from space_invaders.environment import Action, Reward, Terminated
+from space_invaders.gameState import StateFrames
 
 
 ACTIONS_SPACE = 6
+
+ReplayBuff = List[Tuple[StateFrames, StateFrames, Reward, Terminated, Action]]
+
+DiscountFactor = float # Discount factor on the computation of future rewards
 
 
 class Model():
@@ -22,10 +28,10 @@ class Model():
         
         self._model.load_weights(filepath, by_name=True)
 
-    def predict(self, state: np.ndarray) -> np.ndarray:
+    def predict(self, state: StateFrames) -> np.ndarray:
         raise NotImplementedError()
     
-    def fit(self, state: List, y: List) -> None:
+    def fit(self, state: StateFrames, y: List[Reward]) -> None:
         raise NotImplementedError()
 
 
@@ -84,12 +90,28 @@ class DQNBasic(Model):
             return self._model(x)
         
         return self._model.predict(x)
-    
-def real_reward(reward: int, prediction: np.ndarray, ended: bool, gamma: float) -> np.ndarray:
-    if ended:
-        return reward + gamma * prediction
-    else:
-        return reward
 
-def back_prop(model: Model, buff: List[Tuple[np.ndarray, float]]):
+
+def expected_reward(
+        q_func: Model,
+        s: StateFrames,
+        sprime: StateFrames,
+        action: Action,
+        reward: Reward,
+        isTerminalState: Terminated,
+        gamma: DiscountFactor
+    ) -> np.ndarray:
+    r = q_func.predict(s)
+    
+    if isTerminalState:
+        r[action] = reward
+    else:
+        rprime = q_func.predict(sprime)
+        r[action] = reward + gamma * rprime[action]
+    
+    return r
+
+
+
+def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
     pass
