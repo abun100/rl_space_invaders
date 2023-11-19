@@ -76,7 +76,7 @@ def run_game(
 def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
     # keep the data buffer size under control
     if len(buff[0]) > cap:
-        for i in range(buff):
+        for i in range(len(buff)):
             buff[i].pop()
     
     # add new observation
