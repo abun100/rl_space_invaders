@@ -32,7 +32,7 @@ def run(args):
     gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
-    buff_capacity = 500
+    buff_capacity = 10
 
     try:
         run_game(env, q_func, epsilon, gamma,
@@ -43,6 +43,7 @@ def run(args):
         log.error(e, exc_info=True)
     finally:
         env.close()
+
 
 def run_game(
         env: gym.Env,
@@ -84,7 +85,7 @@ def run_game(
             s = sprime # !important this needs to occur after buff is updated
 
             # update weights
-            if train and len(buff) >= buff_capacity:
+            if train and len(buff[0]) >= buff_capacity:
                 back_prop(q_func, buff, gamma)
 
             if ended:
@@ -100,6 +101,7 @@ def shut_down(args, model: Model) -> None:
         return
 
     model.save(args.weights)
+
 
 def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
     # keep the data buffer size under control

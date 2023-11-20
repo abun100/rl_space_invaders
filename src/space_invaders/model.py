@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 from tensorflow import keras
 from typing import List, Tuple
@@ -39,6 +40,7 @@ class Model:
 
         self.optimizer = optimizer
         self.metrics = metrics
+        self.loss = keras.losses.mse
         
         return self
 
@@ -75,28 +77,12 @@ class DQNBasic(Model):
 
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def predict(self, state: np.ndarray) -> np.ndarray:
-        shape_error = Exception("expected input size is (None, 84, 84, 4) where None represents any batch size")
-        shape = state.shape
-        expected_shape = (84, 84, 4)
-
-        if len(shape) < 3:
-            raise shape_error
-        elif len(shape) == 3 and shape != expected_shape:
-            raise shape_error
-        elif len(shape) == 4 and shape[1:] != expected_shape:
-            raise shape_error
-        elif len(shape) > 4: raise shape_error
-
-        # Keras documentation recommends only using model.predict method when
-        # the predicting a batch of size > 1. Otherwise, model(x) is the best
-        # way of computing y.
+    def predict(self, state: np.ndarray, training=False) -> np.ndarray:
         x = state
-        if len(shape) == 3 or shape[0] == 1:
+        if len(x.shape) == 3:
             x = x.reshape((1, 84, 84, 4))
-            return self._model(x)
         
-        return self._model.predict(x)
+        return self._model(x, training=training)
 
 
 def expected_reward(
@@ -115,7 +101,7 @@ def expected_reward(
     y = np.copy(y_hat)
     
     sprime = np.stack(sprime, axis=0)
-    rprime = model.predict(sprime)
+    rprime = model.predict(sprime).numpy()
 
     i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
     a = np.array(action) # The actions we are updating (columns of the predictions we will modify)
@@ -130,6 +116,15 @@ def expected_reward(
 
 def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
     s, sprime, action, reward, ended = buff
-    
-    y_hat = model.predict(s)
-    y = expected_reward(model, y_hat, sprime, action, reward, ended, gamma)
+    s = np.stack(s, axis=0)
+
+    with tf.GradientTape() as tape:
+        y_hat = model.predict(s, training=True)
+
+        # TODO: make sure the computations for expected_reward are not recorded in the tape
+        y = expected_reward(model, y_hat.numpy(), sprime, action, reward, ended, gamma)
+        
+        loss = model.loss(y, y_hat)
+
+    grads = tape.gradient(loss, model._model.trainable_weights)
+    model.optimizer.apply_gradients(zip(grads, model._model.trainable_weights))
