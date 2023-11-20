@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import gymnasium as gym
 import numpy as np
@@ -8,6 +9,10 @@ from space_invaders.gameState import StateFrames, State
 from space_invaders.model import DiscountFactor, Model, back_prop, ReplayBuff
 from tensorflow import keras
 from typing import Tuple
+
+
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def run(args):
@@ -29,7 +34,13 @@ def run(args):
     # During training, we will maintain a dataset of size buff_capacity in memory
     buff_capacity = 500
 
-    run_game(env, q_func, epsilon, gamma, buff_capacity, train=args.train)
+    try:
+        run_game(env, q_func, epsilon, gamma,
+             buff_capacity, episodes=args.episodes, train=args.train)
+    except Exception as e:
+        log.error(e, exc_info=True)
+    finally:
+        env.close()
 
 def run_game(
         env: gym.Env,
@@ -74,14 +85,11 @@ def run_game(
             if train and len(buff) >= buff_capacity:
                 back_prop(q_func, buff, gamma)
 
-            env.render()
-
             if ended:
                 print(f'Score:{score}')
                 break
-    
-    env.close()
-            
+
+            env.render()            
 
 
 def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
@@ -133,6 +141,9 @@ def parse_args():
     args.add_argument('--weights', type=str, default=os.path.join('data', 'weights.h5'))
     args.add_argument('--model', type=str, choices=['dqn-basic'], default='dqn-basic')
     args.add_argument('--train', type=bool, default=False)
+
+    # Game configuration
+    args.add_argument('--episodes', type=int, default=1)
 
     return args.parse_args()
 
