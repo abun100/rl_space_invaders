@@ -41,10 +41,12 @@ def run_game(
         train: bool = False
     ) -> None:
     buff: ReplayBuff = ([], [], [], [], []) # generated data to train the model over time
-
+    
     for _ in range(episodes):
         score = 0
         state, s = reset_env(env)
+        lives = env.ale.lives()
+        
         while True:
             action_vector = q_func.predict(s)
             
@@ -57,9 +59,15 @@ def run_game(
             obs, reward, ended, _, _ = env.step(action)
             score += reward
 
+            was_life_lost = False
+            curr_lives = env.ale.lives()
+            if lives != curr_lives:
+                was_life_lost = True
+                lives = curr_lives
+
             state.add_observation(obs)
             sprime = state.to_numpy()
-            update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
+            update_replay_buffer(buff, buff_capacity, s, action, reward, was_life_lost, sprime)
             s = sprime # !important this needs to occur after buff is updated
 
             # update weights
