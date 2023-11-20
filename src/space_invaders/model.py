@@ -30,9 +30,6 @@ class Model:
 
     def predict(self, state: StateFrames) -> np.ndarray:
         raise NotImplementedError()
-    
-    def fit(self, state: StateFrames, y: List[Reward]) -> None:
-        raise NotImplementedError()
 
 
 class DQNBasic(Model):
@@ -117,14 +114,11 @@ class Compiler:
         assert self.__metrics != None
 
         return self
-    
-    def fit(self, state: StateFrames, y: List[Reward]) -> None:
-        raise NotImplementedError()
 
 
 def expected_reward(
-        q_func: Model,
-        s: List[StateFrames],
+        model: Model,
+        y_hat: np.ndarray,
         sprime: List[StateFrames],
         action: List[Action],
         reward: List[Reward],
@@ -133,25 +127,27 @@ def expected_reward(
     ) -> np.ndarray:
     """
     Computes the expected reward on a batch of samples by leveraging 
-    vectorized operations
+    vectorized operations.
     """
-    s = np.stack(s, axis=0)
-    y_hat = q_func.predict(s)
+    y = np.copy(y_hat)
     
     sprime = np.stack(sprime, axis=0)
-    rprime = q_func.predict(sprime)
+    rprime = model.predict(sprime)
 
-    i = np.arange(y_hat.shape[0]) # Index hack to access all rows in the predictions
+    i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
     a = np.array(action) # The actions we are updating (columns of the predictions we will modify)
 
     t = np.array(isTerminalState) == False
 
     r = np.array(reward) + gamma * rprime[i, a] * t
-    y_hat[i, a] = r # We only update the y_hat of those actions we know exactly what the future looks like
+    y[i, a] = r # We only update the y of those actions we know exactly what the future looks like
 
-    return y_hat
+    return y
 
 
 
 def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
-    pass
+    s, sprime, action, reward, ended = buff
+    
+    y_hat = model.predict(s)
+    y = expected_reward(model, y_hat, sprime, action, reward, ended, gamma)
