@@ -5,7 +5,7 @@ import numpy as np
 
 from space_invaders import model
 from space_invaders.gameState import StateFrames, State
-from space_invaders.model import Compiler, DiscountFactor, Model, back_prop, ReplayBuff
+from space_invaders.model import DiscountFactor, Model, back_prop, ReplayBuff
 from tensorflow import keras
 from typing import Tuple
 
@@ -109,14 +109,10 @@ def load_q_func(model_type: str, weights_file: str) -> Model:
 
 
 def compile_model(model: Model, learning_rate=0.001) -> Model:
-    return Compiler(
-        model
-    ).useMetrics(
+    return model.compile(
+        keras.optimizers.SGD(learning_rate),
         ['accuracy', 'mse']
-    ).useOptimizer(
-        keras.optimizers.SGD(learning_rate)
-    ).compile()
-
+    )
 
 def parse_args():
     args = argparse.ArgumentParser()

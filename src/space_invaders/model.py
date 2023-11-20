@@ -30,6 +30,17 @@ class Model:
 
     def predict(self, state: StateFrames) -> np.ndarray:
         raise NotImplementedError()
+    
+    def compile(self, optimizer: keras.optimizers.Optimizer, metrics: List[str]) -> type["Model"]:
+        assert isinstance(optimizer, keras.optimizers.Optimizer)
+        assert len(metrics) > 0
+        for m in metrics:
+            assert isinstance(m, str)
+
+        self.optimizer = optimizer
+        self.metrics = metrics
+        
+        return self
 
 
 class DQNBasic(Model):
@@ -86,34 +97,6 @@ class DQNBasic(Model):
             return self._model(x)
         
         return self._model.predict(x)
-
-
-class Compiler:
-    def __init__(self, model: Model):
-        self.__model = model
-        self.predict = self.__model.predict
-        self.load = self.__model.load
-        self.save = self.__model.save
-
-    def useOptimizer(self, optimizer: keras.optimizers.Optimizer) -> type["Compiler"]:
-        assert isinstance(optimizer, keras.optimizers.Optimizer)
-        self.__optimizer = optimizer
-        return self
-    
-    def useMetrics(self, metrics: List[str]) -> type["Compiler"]:
-        assert len(metrics) > 0
-        for m in metrics:
-            assert isinstance(m, str)
-        
-        self.__metrics = metrics
-        
-        return self
-    
-    def compile(self) -> Model:
-        assert self.__optimizer != None
-        assert self.__metrics != None
-
-        return self
 
 
 def expected_reward(
