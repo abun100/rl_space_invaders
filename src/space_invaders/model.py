@@ -128,7 +128,6 @@ def expected_reward(
     return y
 
 
-
 def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
     s, sprime, action, reward, ended = buff
     

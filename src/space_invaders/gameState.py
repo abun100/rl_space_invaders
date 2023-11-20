@@ -18,6 +18,7 @@ class State:
     def to_numpy(self) -> StateFrames:
         return np.stack(self.obs, axis=2)
 
+
 def process_frame(obs: np.ndarray) -> np.ndarray:
     # crop the screen to get rid not needed screen parts (ex. the area below player)
     cropped_frame = obs[24:-12, 16:-28]
@@ -30,5 +31,3 @@ def process_frame(obs: np.ndarray) -> np.ndarray:
 
     # return 84 x 84 x 1 frame
     return preprocessed_frame
-
-

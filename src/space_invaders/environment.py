@@ -4,12 +4,14 @@ Reward = float
 
 Terminated = bool
 
+
 def get_end_obs(env):
     """
     @return (array): ending observation image
     """
     
     return env.unwrapped.ale.getScreenRGB()
+
 
 def get_end_reward(env):
     """
@@ -18,12 +20,14 @@ def get_end_reward(env):
 
     return env.unwrapped.ale.act(0)
 
+
 def get_episode_frame(env):
     """
     @return (int): ending frame number
     """
 
     return env.unwrapped.ale.getEpisodeFrameNumber()
+
 
 def get_data(step, env):
     """
@@ -43,6 +47,7 @@ def get_data(step, env):
     
     # info returns [lives, episode frame #, total frame #]
     return obs, reward, info
+
 
 def perform_action(action, env):
     """
