@@ -63,7 +63,6 @@ class DQNBasic(Model):
             activation='relu')(x)
         x = keras.layers.Flatten()(x)
         x = keras.layers.Dense(256, activation='relu')(x)
-
         outputs = keras.layers.Dense(ACTIONS_SPACE, activation='linear')(x)
 
         return keras.Model(inputs=inputs, outputs=outputs)
@@ -90,6 +89,38 @@ class DQNBasic(Model):
             return self._model(x)
         
         return self._model.predict(x)
+
+
+class Compiler:
+    def __init__(self, model: Model):
+        self.__model = model
+
+    def withOptimizer(self, optimizer: keras.optimizers.Optimizer) -> type["Compiler"]:
+        assert isinstance(optimizer, keras.optimizers.Optimizer)
+        self.__optimizer = optimizer
+        return self
+    
+    def withMetrics(self, metrics: List[str]) -> type["Compiler"]:
+        assert len(metrics) > 0
+        for m in metrics:
+            assert isinstance(m, str)
+        
+        self.__metrics = metrics
+        
+        return self
+    
+    def compile(self) -> Model:
+        assert self.__optimizer != None
+        assert self.__metrics != None
+
+        self.__model._model.compile(
+            optimizer=self.__optimizer,
+            loss=keras.losses.mean_squared_error,
+            metrics=self.__metrics
+        )
+        self.__model._model.summary()
+
+        return self.__model
 
 
 def expected_reward(

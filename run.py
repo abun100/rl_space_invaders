@@ -5,7 +5,8 @@ import numpy as np
 
 from space_invaders import model
 from space_invaders.gameState import StateFrames, State
-from space_invaders.model import DiscountFactor, Model, back_prop, ReplayBuff
+from space_invaders.model import Compiler, DiscountFactor, Model, back_prop, ReplayBuff
+from tensorflow import keras
 from typing import Tuple
 
 
@@ -100,6 +101,13 @@ def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
 
 def load_q_func(model_type: str, weights_file: str) -> Model:
     m = model.DQNBasic()
+    m = Compiler(
+        m
+    ).withMetrics(
+        ['accuracy', 'mse']
+    ).withOptimizer(
+        keras.optimizers.SGD(learning_rate=0.001)
+    ).compile()
     m.load(weights_file)
     
     return m
@@ -109,7 +117,7 @@ def parse_args():
     args = argparse.ArgumentParser()
     
     # Env configuration
-    args.add_argument('--render_mode', type=str, choices=['human', 'rgb_array'], default='human')
+    args.add_argument('--render_mode', type=str, choices=['human', 'rgb_array'], default='rgb_array')
     args.add_argument('--obs_type', type=str, choices=['rgb', 'grayscale', 'ram'], default='grayscale')
 
     # Model configuration
