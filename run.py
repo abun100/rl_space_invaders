@@ -12,6 +12,8 @@ from typing import Tuple
 
 def run(args):
     q_func = load_q_func(args.model, args.weights)
+    if args.train:
+        q_func = compile_model(q_func)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',
@@ -101,16 +103,19 @@ def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
 
 def load_q_func(model_type: str, weights_file: str) -> Model:
     m = model.DQNBasic()
-    m = Compiler(
-        m
-    ).withMetrics(
-        ['accuracy', 'mse']
-    ).withOptimizer(
-        keras.optimizers.SGD(learning_rate=0.001)
-    ).compile()
     m.load(weights_file)
     
     return m
+
+
+def compile_model(model: Model, learning_rate=0.001) -> Model:
+    return Compiler(
+        model
+    ).useMetrics(
+        ['accuracy', 'mse']
+    ).useOptimizer(
+        keras.optimizers.SGD(learning_rate)
+    ).compile()
 
 
 def parse_args():

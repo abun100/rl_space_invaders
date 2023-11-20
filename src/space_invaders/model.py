@@ -13,7 +13,7 @@ ReplayBuff = Tuple[List[StateFrames], List[StateFrames], List[Reward], List[Term
 DiscountFactor = float # Discount factor on the computation of future rewards
 
 
-class Model():
+class Model:
     _model: keras.Model = None
 
     def save(self, filepath: str) -> None:
@@ -94,13 +94,16 @@ class DQNBasic(Model):
 class Compiler:
     def __init__(self, model: Model):
         self.__model = model
+        self.predict = self.__model.predict
+        self.load = self.__model.load
+        self.save = self.__model.save
 
-    def withOptimizer(self, optimizer: keras.optimizers.Optimizer) -> type["Compiler"]:
+    def useOptimizer(self, optimizer: keras.optimizers.Optimizer) -> type["Compiler"]:
         assert isinstance(optimizer, keras.optimizers.Optimizer)
         self.__optimizer = optimizer
         return self
     
-    def withMetrics(self, metrics: List[str]) -> type["Compiler"]:
+    def useMetrics(self, metrics: List[str]) -> type["Compiler"]:
         assert len(metrics) > 0
         for m in metrics:
             assert isinstance(m, str)
@@ -113,14 +116,10 @@ class Compiler:
         assert self.__optimizer != None
         assert self.__metrics != None
 
-        self.__model._model.compile(
-            optimizer=self.__optimizer,
-            loss=keras.losses.mean_squared_error,
-            metrics=self.__metrics
-        )
-        self.__model._model.summary()
-
-        return self.__model
+        return self
+    
+    def fit(self, state: StateFrames, y: List[Reward]) -> None:
+        raise NotImplementedError()
 
 
 def expected_reward(
