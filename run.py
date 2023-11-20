@@ -37,6 +37,8 @@ def run(args):
     try:
         run_game(env, q_func, epsilon, gamma,
              buff_capacity, episodes=args.episodes, train=args.train)
+    except KeyboardInterrupt:
+        shut_down(args, q_func)
     except Exception as e:
         log.error(e, exc_info=True)
     finally:
@@ -92,6 +94,13 @@ def run_game(
             env.render()            
 
 
+def shut_down(args, model: Model) -> None:
+    print('shutting down program, please wait...')
+    if not args.train or not args.save_on_cancel:
+        return
+
+    model.save(args.weights)
+
 def update_replay_buffer(buff, cap, s, action, reward, ended, sprime):
     # keep the data buffer size under control
     if len(buff[0]) > cap:
@@ -130,6 +139,7 @@ def compile_model(model: Model, learning_rate=0.001) -> Model:
         ['accuracy', 'mse']
     )
 
+
 def parse_args():
     args = argparse.ArgumentParser()
     
@@ -141,6 +151,7 @@ def parse_args():
     args.add_argument('--weights', type=str, default=os.path.join('data', 'weights.h5'))
     args.add_argument('--model', type=str, choices=['dqn-basic'], default='dqn-basic')
     args.add_argument('--train', type=bool, default=False)
+    args.add_argument('--save_on_cancel', type=bool, default=True)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)
