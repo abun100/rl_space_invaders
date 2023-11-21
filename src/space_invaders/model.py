@@ -121,8 +121,8 @@ def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
     with tf.GradientTape() as tape:
         y_hat = model.predict(s, training=True)
 
-        # TODO: make sure the computations for expected_reward are not recorded in the tape
-        y = expected_reward(model, y_hat.numpy(), sprime, action, reward, ended, gamma)
+        # Stop watching expected_rewards 
+        y = tf.stop_gradient(expected_reward(model, y_hat.numpy(), sprime, action, reward, ended, gamma))
         
         loss = model.loss(y, y_hat)
 
