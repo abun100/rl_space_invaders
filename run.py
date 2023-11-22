@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 def run(args):
     q_func = load_q_func(args.model, args.weights)
     if args.train:
-        q_func = compile_model(q_func)
+        q_func = compile_model(q_func, args.learning_rate)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',
@@ -28,15 +28,17 @@ def run(args):
         obs_type=args.obs_type
     )
 
-    epsilon = 0.03 # With probability epsilon a random action will be selected
+    epsilon = args.epsilon
     gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
-    buff_capacity = 10
+    buff_capacity = args.buff_capacity
+    batch_size = args.batch_size
+    epochs = args.epochs
 
     try:
         run_game(env, q_func, epsilon, gamma,
-             buff_capacity, episodes=args.episodes, train=args.train)
+             buff_capacity, epochs, batch_size, episodes=args.episodes, train=args.train)
     except KeyboardInterrupt:
         shut_down(args, q_func)
     except Exception as e:
@@ -51,6 +53,8 @@ def run_game(
         epsilon: float,
         gamma: float,
         buff_capacity: int,
+        epochs: int,
+        batch_size: int,
         episodes: int = 1,
         train: bool = False
     ) -> None:
@@ -86,7 +90,7 @@ def run_game(
 
             # update weights
             if train and len(buff[0]) >= buff_capacity:
-                back_prop(q_func, buff, gamma)
+                back_prop(q_func, buff, gamma, batch_size, epochs)
 
             if ended:
                 print(f'Score:{score}')
@@ -152,8 +156,15 @@ def parse_args():
     # Model configuration
     args.add_argument('--weights', type=str, default=os.path.join('data', 'weights.h5'))
     args.add_argument('--model', type=str, choices=['dqn-basic'], default='dqn-basic')
+
+    # Training Configuration
     args.add_argument('--train', type=bool, default=False)
     args.add_argument('--save_on_cancel', type=bool, default=True)
+    args.add_argument('--buff_capacity', type=int, default=500) # size of available data set
+    args.add_argument('--batch_size', type=int, default=16) # when training how many samples to take
+    args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
+    args.add_argument('--epsilon', type=float, default=0.03) # with probability epsilon choose random action
+    args.add_argument('--learning_rate', type=float, default=.01)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)

@@ -88,10 +88,10 @@ class DQNBasic(Model):
 def expected_reward(
         model: Model,
         y_hat: np.ndarray,
-        sprime: List[StateFrames],
-        action: List[Action],
-        reward: List[Reward],
-        isTerminalState: List[Terminated],
+        sprime: np.ndarray,
+        action: np.ndarray,
+        reward: np.ndarray,
+        isTerminalState: np.ndarray,
         gamma: DiscountFactor
     ) -> np.ndarray:
     """
@@ -100,31 +100,59 @@ def expected_reward(
     """
     y = np.copy(y_hat)
     
-    sprime = np.stack(sprime, axis=0)
+    
     rprime = model.predict(sprime).numpy()
 
     i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
-    a = np.array(action) # The actions we are updating (columns of the predictions we will modify)
+    a = action # The actions we are updating (columns of the predictions we will modify)
 
-    t = np.array(isTerminalState) == False
+    t = isTerminalState == False
 
-    r = np.array(reward) + gamma * rprime[i, a] * t
+    r = reward + gamma * rprime[i, a] * t
     y[i, a] = r # We only update the y of those actions we know exactly what the future looks like
 
     return y
 
+def unstack_buff(buff: ReplayBuff) -> Tuple[
+    np.ndarray,
+    np.ndarray, 
+    np.ndarray, 
+    np.ndarray, 
+    np.ndarray]:
+    return (np.stack(buff[0], axis=0),
+    np.stack(buff[1], axis=0),
+    np.array(buff[2]),
+    np.array(buff[3]),
+    np.array(buff[4]))
 
-def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor) -> None:
-    s, sprime, action, reward, ended = buff
-    s = np.stack(s, axis=0)
+def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
+    batch_size, epochs) -> None:
+    s, sprime, action, reward, ended = unstack_buff(buff)
 
-    with tf.GradientTape() as tape:
-        y_hat = model.predict(s, training=True)
+    total_observations = s.shape[0] # how many states do we have
+    p = batch_size / total_observations # proportion of states we want to train over
 
-        # Stop watching expected_rewards 
-        y = tf.stop_gradient(expected_reward(model, y_hat.numpy(), sprime, action, reward, ended, gamma))
+    for _ in range(epochs):
+        sample = np.random.binomial(1, p, total_observations) # random states we are training on
         
-        loss = model.loss(y, y_hat)
+        state_sample, sprime_sample, action_sample, reward_sample, ended_sample = (
+            s[sample,:,:,:], 
+            sprime[sample,:,:,:],
+            action[sample],
+            reward[sample],
+            ended[sample]
+        )
 
-    grads = tape.gradient(loss, model._model.trainable_weights)
-    model.optimizer.apply_gradients(zip(grads, model._model.trainable_weights))
+
+        with tf.GradientTape() as tape:
+            y_hat = model.predict(state_sample, training=True)
+
+            # Stop watching expected_rewards 
+            y = tf.stop_gradient(expected_reward(model, y_hat.numpy(), 
+                                                 sprime_sample, action_sample, reward_sample,
+                                                 ended_sample, gamma))
+
+            loss = model.loss(y, y_hat)
+
+        grads = tape.gradient(loss, model._model.trainable_weights)
+        model.optimizer.apply_gradients(zip(grads, model._model.trainable_weights))

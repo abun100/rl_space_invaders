@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "run.py",
             "console": "integratedTerminal",
-            "args": ["--train", "True"],
+            "args": ["--train", "True", "--episodes", "10"],
             "justMyCode": true
         }
     ]
