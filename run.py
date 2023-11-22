@@ -39,11 +39,10 @@ def run(args):
     try:
         run_game(env, q_func, epsilon, gamma,
              buff_capacity, epochs, batch_size, episodes=args.episodes, train=args.train)
-    except KeyboardInterrupt:
-        shut_down(args, q_func)
     except Exception as e:
         log.error(e, exc_info=True)
     finally:
+        shut_down(args, q_func)
         env.close()
 
 
