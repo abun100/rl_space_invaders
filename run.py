@@ -29,6 +29,7 @@ def run(args):
     )
 
     epsilon = args.epsilon
+    epsilon_decay = args.epsilon_decay
     gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
@@ -37,7 +38,7 @@ def run(args):
     epochs = args.epochs
 
     try:
-        run_game(env, q_func, epsilon, gamma,
+        run_game(env, q_func, epsilon, epsilon_decay,gamma,
              buff_capacity, epochs, batch_size, episodes=args.episodes, train=args.train)
     except KeyboardInterrupt:
         print('shutting down program, please wait...')
@@ -52,41 +53,31 @@ def run_game(
         env: gym.Env,
         q_func: Model,
         epsilon: float,
+        epsilon_decay: float,
         gamma: float,
         buff_capacity: int,
         epochs: int,
         batch_size: int,
         episodes: int = 1,
-        train: bool = False
+        train: bool = False,
+        k = 3 # frame skipping parameter
     ) -> None:
-    buff: ReplayBuff = ([], [], [], [], []) # generated data to train the model over time
-    
-    for _ in range(episodes):
+    buff: ReplayBuff = init_buffer(env, buff_capacity, k) # generated data to train the model over time
+
+    for e in range(episodes):
+        print(f'Playing episode {e} of {episodes}')
+
         score = 0
         state, s = reset_env(env)
-        lives = env.ale.lives()
         
         while True:
-            action_vector = q_func.predict(s)
-            
-            action = None
-            if np.random.uniform() <= epsilon:
-                action = int(np.random.randint(0, 5))
-            else:
-                action = int(np.argmax(action_vector))
+            action = compute_action(q_func, epsilon, train, s)
 
-            obs, reward, ended, _, _ = env.step(action)
+            reward, ended = step(env, k, state, action)
             score += reward
 
-            was_life_lost = False
-            curr_lives = env.ale.lives()
-            if lives != curr_lives:
-                was_life_lost = True
-                lives = curr_lives
-
-            state.add_observation(obs)
             sprime = state.to_numpy()
-            update_replay_buffer(buff, buff_capacity, s, action, reward, was_life_lost, sprime)
+            update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
             s = sprime # !important this needs to occur after buff is updated
 
             # update weights
@@ -97,7 +88,51 @@ def run_game(
                 print(f'Score:{score}')
                 break
 
-            env.render()            
+            if epsilon > .1:
+                epsilon -= 1 / epsilon_decay
+
+            env.render()
+
+def init_buffer(env, buff_capacity, k) -> ReplayBuff:
+    """
+    init_buffer fills up the buffer up to its max capacity by selecting random actions
+    """
+    buff = ([], [], [], [], [])
+    state, s = reset_env(env)
+
+    while len(buff[0]) < buff_capacity:
+        action = int(np.random.randint(0, 5))
+        reward, ended = step(env, k, state, action)
+        sprime = state.to_numpy()
+        update_replay_buffer(buff, buff_capacity, s, action, reward, ended, sprime)
+        s = sprime
+
+        if ended:
+            state, s = reset_env(env)
+
+    return buff
+
+def step(env, k, state, action):
+    score = 0
+    for _ in range(k):
+        obs, reward, ended, _, _ = env.step(action)
+        score += reward
+        state.add_observation(obs)
+
+        if ended:
+            break
+    
+    return score, ended
+
+def compute_action(q_func, epsilon, train, s):
+    action_vector = q_func.predict(s)
+
+    if train and np.random.uniform() <= epsilon:
+        action = int(np.random.randint(0, 5))
+    else:
+        action = int(np.argmax(action_vector))
+
+    return action           
 
 
 def shut_down(args, model: Model) -> None:
@@ -141,7 +176,7 @@ def load_q_func(model_type: str, weights_file: str) -> Model:
 
 def compile_model(model: Model, learning_rate=0.001) -> Model:
     return model.compile(
-        keras.optimizers.SGD(learning_rate),
+        keras.optimizers.RMSprop(learning_rate),
         ['accuracy', 'mse']
     )
 
@@ -160,11 +195,12 @@ def parse_args():
     # Training Configuration
     args.add_argument('--train', type=bool, default=False)
     args.add_argument('--save_on_cancel', type=bool, default=True)
-    args.add_argument('--buff_capacity', type=int, default=500) # size of available data set
-    args.add_argument('--batch_size', type=int, default=16) # when training how many samples to take
+    args.add_argument('--buff_capacity', type=int, default=6_000) # size of available data set
+    args.add_argument('--batch_size', type=int, default=32) # when training how many samples to take
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
-    args.add_argument('--epsilon', type=float, default=0.03) # with probability epsilon choose random action
-    args.add_argument('--learning_rate', type=float, default=.001)
+    args.add_argument('--epsilon', type=float, default=1) # with probability epsilon choose random action
+    args.add_argument('--epsilon_decay', type=int, default=100_000)
+    args.add_argument('--learning_rate', type=float, default=0.00025)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)

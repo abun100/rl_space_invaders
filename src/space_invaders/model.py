@@ -119,11 +119,13 @@ def unstack_buff(buff: ReplayBuff) -> Tuple[
     np.ndarray, 
     np.ndarray, 
     np.ndarray]:
-    return (np.stack(buff[0], axis=0),
-    np.stack(buff[1], axis=0),
-    np.array(buff[2]),
-    np.array(buff[3]),
-    np.array(buff[4]))
+    return (
+        np.stack(buff[0], axis=0),
+        np.stack(buff[1], axis=0),
+        np.array(buff[2]),
+        np.array(buff[3]),
+        np.array(buff[4])
+    )
 
 def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
     batch_size, epochs) -> None:
@@ -131,7 +133,7 @@ def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
 
     total_observations = s.shape[0] # how many states do we have
     rng = np.random.default_rng()
-    
+
     for _ in range(epochs):
         sample = rng.choice(total_observations, batch_size) # random states we are training on
         
@@ -142,7 +144,6 @@ def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
             reward[sample],
             ended[sample]
         )
-
 
         with tf.GradientTape() as tape:
             y_hat = model.predict(state_sample, training=True)
