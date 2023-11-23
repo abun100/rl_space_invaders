@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow import keras
 from typing import List
 from space_invaders.environment import Action
-from space_invaders.gameState import StateFrames
+from space_invaders.gameState import State, StateFrames
 
 
 ACTIONS_SPACE = 6
@@ -80,11 +80,11 @@ class DQNBasic(Model):
         return self._model(x, training=training)
 
 
-def compute_action(q_func: Model, epsilon: float, train: bool, s: StateFrames) -> Action:
+def compute_action(q_func: Model, epsilon: float, train: bool, s: State) -> Action:
     if train and np.random.uniform() <= epsilon:
         action = int(np.random.randint(0, 5))
     else:
-        action_vector = q_func.predict(s)
+        action_vector = q_func.predict(s.to_numpy())
         action = int(np.argmax(action_vector))
 
     return action

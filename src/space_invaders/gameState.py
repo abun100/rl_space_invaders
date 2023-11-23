@@ -1,10 +1,17 @@
-from typing import List
 from skimage import transform
 
 import numpy as np
 
 
 StateFrames = np.ndarray
+
+Action = int
+
+Reward = float
+
+Terminated = bool
+
+Died = bool
 
 
 class State:

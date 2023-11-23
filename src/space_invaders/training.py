@@ -1,75 +1,11 @@
-from typing import List, Tuple
 import numpy as np
 import tensorflow as tf
-from space_invaders.environment import Action, Reward, Terminated, reset_env, step
-from space_invaders.gameState import StateFrames
+
 from space_invaders.model import Model
+from space_invaders.environment import ReplayBuff, unstack_buff
 
-
-ReplayBuff = Tuple[List[StateFrames], 
-                   List[StateFrames], 
-                   List[Reward], 
-                   List[Terminated], 
-                   List[Action]]
 
 DiscountFactor = float # Discount factor on the computation of future rewards
-
-
-def init_buffer(env, buff_capacity) -> ReplayBuff:
-    """
-    init_buffer fills up the buffer up to its max capacity by selecting random actions
-    """
-    buff = ([], [], [], [], [])
-    state, s = reset_env(env)
-
-    while len(buff[0]) < buff_capacity:
-        action = int(np.random.randint(0, 5))
-        sprime, reward, ended, died = step(env, state, action)
-        update_replay_buffer(buff, s, action, reward, died, sprime, True)
-        s = sprime
-
-        if ended:
-            state, s = reset_env(env)
-
-    return buff
-
-
-def update_replay_buffer(
-        buff: ReplayBuff, 
-        s: StateFrames,
-        action: Action,
-        reward: Reward,
-        ended: Terminated,
-        sprime: StateFrames,
-        initializing: bool = False
-    ):
-    # keep the data buffer size under control
-    if not initializing and len(buff[0]) > 0:
-        for i in range(len(buff)):
-            buff[i].pop()
-    
-    # add new observation
-    buff[0].append(s)
-    buff[1].append(sprime)
-    buff[2].append(action)
-    buff[3].append(reward)
-    buff[4].append(ended)
-
-
-def unstack_buff(buff: ReplayBuff) -> Tuple[
-        np.ndarray,
-        np.ndarray, 
-        np.ndarray, 
-        np.ndarray, 
-        np.ndarray,
-    ]:
-    return (
-        np.stack(buff[0], axis=0),
-        np.stack(buff[1], axis=0),
-        np.array(buff[2]),
-        np.array(buff[3]),
-        np.array(buff[4])
-    )
 
 
 def expected_reward(

@@ -2,12 +2,11 @@ import argparse
 import logging
 import os
 import gymnasium as gym
-import numpy as np
 
 from space_invaders import model
-from space_invaders.environment import reset_env, step
+from space_invaders.environment import reset_env, step, ReplayBuff, init_buffer
 from space_invaders.model import Model, compile_model, compute_action
-from space_invaders.training import DiscountFactor, back_prop, init_buffer, update_replay_buffer
+from space_invaders.training import DiscountFactor, back_prop
 
 
 log = logging.getLogger(__name__)
@@ -26,20 +25,25 @@ def run(args):
     )
 
     epsilon = args.epsilon
-    epsilon_decay = args.epsilon_decay
+    epsilon_decay = 1 / args.epsilon_decay
     gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
     if args.train:
-        buff_capacity = args.buff_capacity
+        replay_buffer = init_buffer(env, args.buff_capacity)
     else:
-        buff_capacity = 0
+        replay_buffer = None
     batch_size = args.batch_size
     epochs = args.epochs
 
     try:
-        play_game(env, q_func, epsilon, epsilon_decay,gamma,
-             buff_capacity, epochs, batch_size, episodes=args.episodes, train=args.train)
+        play_game(
+            env, q_func, epsilon, epsilon_decay, gamma,
+            epochs, batch_size,
+            episodes=args.episodes,
+            train=args.train,
+            buff=replay_buffer
+        )
     except KeyboardInterrupt:
         log.info('shutting down program, please wait...')
     except Exception as e:
@@ -55,27 +59,22 @@ def play_game(
         epsilon: float,
         epsilon_decay: float,
         gamma: float,
-        buff_capacity: int,
         epochs: int,
         batch_size: int,
         episodes: int = 1,
         train: bool = False,
+        buff: ReplayBuff | None = None,
     ) -> None:
-    buff = init_buffer(env, buff_capacity) # generated data to train the model over time
-
     for e in range(episodes):
         log.info(f'Playing episode {e} of {episodes}')
 
         score = 0
-        state, s = reset_env(env)
+        state = reset_env(env)
         
         while True:
-            action = compute_action(q_func, epsilon, train, s)
-            sprime, reward, ended, died = step(env, state, action)
+            action = compute_action(q_func, epsilon, train, state)
+            state, reward, ended = step(env, state, action, buff)
             score += reward
-
-            update_replay_buffer(buff, s, action, reward, died, sprime)
-            s = sprime # !important this needs to occur after buff is updated
 
             # update weights
             if train:
@@ -86,7 +85,7 @@ def play_game(
                 break
 
             if epsilon > .1:
-                epsilon -= 1 / epsilon_decay
+                epsilon -= epsilon_decay
 
             env.render()
 
@@ -123,8 +122,8 @@ def parse_args():
     args.add_argument('--buff_capacity', type=int, default=6_000) # size of available data set
     args.add_argument('--batch_size', type=int, default=32) # when training how many samples to take
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
-    args.add_argument('--epsilon', type=float, default=.25) # with probability epsilon choose random action
-    args.add_argument('--epsilon_decay', type=int, default=1_000)
+    args.add_argument('--epsilon', type=float, default=1) # with probability epsilon choose a random action
+    args.add_argument('--epsilon_decay', type=int, default=100_000)
     args.add_argument('--learning_rate', type=float, default=0.00025)
 
     # Game configuration
