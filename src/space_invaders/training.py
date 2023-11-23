@@ -24,8 +24,8 @@ def init_buffer(env, buff_capacity) -> ReplayBuff:
 
     while len(buff[0]) < buff_capacity:
         action = int(np.random.randint(0, 5))
-        sprime, reward, ended = step(env, state, action)
-        update_replay_buffer(buff, s, action, reward, ended, sprime, True)
+        sprime, reward, ended, died = step(env, state, action)
+        update_replay_buffer(buff, s, action, reward, died, sprime, True)
         s = sprime
 
         if ended:
@@ -44,7 +44,7 @@ def update_replay_buffer(
         initializing: bool = False
     ):
     # keep the data buffer size under control
-    if not initializing:
+    if not initializing and len(buff[0]) > 0:
         for i in range(len(buff)):
             buff[i].pop()
     
@@ -61,7 +61,7 @@ def unstack_buff(buff: ReplayBuff) -> Tuple[
         np.ndarray, 
         np.ndarray, 
         np.ndarray, 
-        np.ndarray
+        np.ndarray,
     ]:
     return (
         np.stack(buff[0], axis=0),
@@ -102,7 +102,7 @@ def expected_reward(
 
 
 def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
-    batch_size, epochs) -> None:
+    batch_size: int, epochs: int) -> None:
     s, sprime, action, reward, ended = unstack_buff(buff)
 
     total_observations = s.shape[0] # how many states do we have

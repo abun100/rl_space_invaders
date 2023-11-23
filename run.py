@@ -30,7 +30,10 @@ def run(args):
     gamma: DiscountFactor = 0.3
 
     # During training, we will maintain a dataset of size buff_capacity in memory
-    buff_capacity = args.buff_capacity
+    if args.train:
+        buff_capacity = args.buff_capacity
+    else:
+        buff_capacity = 0
     batch_size = args.batch_size
     epochs = args.epochs
 
@@ -68,10 +71,10 @@ def play_game(
         
         while True:
             action = compute_action(q_func, epsilon, train, s)
-            sprime, reward, ended = step(env, state, action)
+            sprime, reward, ended, died = step(env, state, action)
             score += reward
 
-            update_replay_buffer(buff, s, action, reward, ended, sprime)
+            update_replay_buffer(buff, s, action, reward, died, sprime)
             s = sprime # !important this needs to occur after buff is updated
 
             # update weights
@@ -85,7 +88,7 @@ def play_game(
             if epsilon > .1:
                 epsilon -= 1 / epsilon_decay
 
-            env.render()      
+            env.render()
 
 
 def shut_down(args, model: Model) -> None:
@@ -119,9 +122,9 @@ def parse_args():
     args.add_argument('--buff_capacity', type=int, default=6_000) # size of available data set
     args.add_argument('--batch_size', type=int, default=32) # when training how many samples to take
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
-    args.add_argument('--epsilon', type=float, default=.5) # with probability epsilon choose random action
-    args.add_argument('--epsilon_decay', type=int, default=10_000)
-    args.add_argument('--learning_rate', type=float, default=0.0015)
+    args.add_argument('--epsilon', type=float, default=.25) # with probability epsilon choose random action
+    args.add_argument('--epsilon_decay', type=int, default=1_000)
+    args.add_argument('--learning_rate', type=float, default=0.00025)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)
