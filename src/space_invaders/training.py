@@ -87,7 +87,6 @@ def expected_reward(
     """
     y = np.copy(y_hat)
     
-    
     rprime = model.predict(sprime).numpy()
 
     i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
@@ -123,9 +122,16 @@ def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
             y_hat = model.predict(state_sample, training=True)
 
             # Stop watching expected_rewards 
-            y = tf.stop_gradient(expected_reward(model, y_hat.numpy(), 
-                                                 sprime_sample, action_sample, reward_sample,
-                                                 ended_sample, gamma))
+            y = tf.stop_gradient(
+                expected_reward(
+                    model, y_hat.numpy(), 
+                    sprime_sample,
+                    action_sample,
+                    reward_sample,
+                    ended_sample,
+                    gamma
+                )
+            )
 
             loss = model.loss(y, y_hat)
 
