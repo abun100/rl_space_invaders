@@ -130,10 +130,10 @@ def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
     s, sprime, action, reward, ended = unstack_buff(buff)
 
     total_observations = s.shape[0] # how many states do we have
-    p = batch_size / total_observations # proportion of states we want to train over
-
+    rng = np.random.default_rng()
+    
     for _ in range(epochs):
-        sample = np.random.binomial(1, p, total_observations) # random states we are training on
+        sample = rng.choice(total_observations, batch_size) # random states we are training on
         
         state_sample, sprime_sample, action_sample, reward_sample, ended_sample = (
             s[sample,:,:,:], 

@@ -39,6 +39,8 @@ def run(args):
     try:
         run_game(env, q_func, epsilon, gamma,
              buff_capacity, epochs, batch_size, episodes=args.episodes, train=args.train)
+    except KeyboardInterrupt:
+        print('shutting down program, please wait...')
     except Exception as e:
         log.error(e, exc_info=True)
     finally:
@@ -99,7 +101,6 @@ def run_game(
 
 
 def shut_down(args, model: Model) -> None:
-    print('shutting down program, please wait...')
     if not args.train or not args.save_on_cancel:
         return
 
@@ -163,7 +164,7 @@ def parse_args():
     args.add_argument('--batch_size', type=int, default=16) # when training how many samples to take
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
     args.add_argument('--epsilon', type=float, default=0.03) # with probability epsilon choose random action
-    args.add_argument('--learning_rate', type=float, default=.01)
+    args.add_argument('--learning_rate', type=float, default=.001)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)
