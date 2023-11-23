@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run(args):
-    q_func = load_q_func(args.model, args.weights)
+    q_func = load_q_func(args)
 
     env = gym.make(
         'ALE/SpaceInvaders-v5',
@@ -98,10 +98,11 @@ def shut_down(args, model: Model) -> None:
     model.save(args.weights)
 
 
-def load_q_func(model_type: str, weights_file: str) -> Model:
+def load_q_func(args) -> Model:
     m = model.DQNBasic()
-    m.load(weights_file)
+    m.load(args.weights)
     m = compile_model(m, args.learning_rate)
+    
     return m
 
 
