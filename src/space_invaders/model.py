@@ -1,17 +1,12 @@
 import numpy as np
-import tensorflow as tf
 
 from tensorflow import keras
-from typing import List, Tuple
-from space_invaders.environment import Action, Reward, Terminated
+from typing import List
+from space_invaders.environment import Action
 from space_invaders.gameState import StateFrames
 
 
 ACTIONS_SPACE = 6
-
-ReplayBuff = Tuple[List[StateFrames], List[StateFrames], List[Reward], List[Terminated], List[Action]]
-
-DiscountFactor = float # Discount factor on the computation of future rewards
 
 
 class Model:
@@ -85,75 +80,18 @@ class DQNBasic(Model):
         return self._model(x, training=training)
 
 
-def expected_reward(
-        model: Model,
-        y_hat: np.ndarray,
-        sprime: np.ndarray,
-        action: np.ndarray,
-        reward: np.ndarray,
-        isTerminalState: np.ndarray,
-        gamma: DiscountFactor
-    ) -> np.ndarray:
-    """
-    Computes the expected reward on a batch of samples by leveraging 
-    vectorized operations.
-    """
-    y = np.copy(y_hat)
-    
-    
-    rprime = model.predict(sprime).numpy()
+def compute_action(q_func: Model, epsilon: float, train: bool, s: StateFrames) -> Action:
+    if train and np.random.uniform() <= epsilon:
+        action = int(np.random.randint(0, 5))
+    else:
+        action_vector = q_func.predict(s)
+        action = int(np.argmax(action_vector))
 
-    i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
-    a = action # The actions we are updating (columns of the predictions we will modify)
+    return action
 
-    t = isTerminalState == False
 
-    r = reward + gamma * rprime[i, a] * t
-    y[i, a] = r # We only update the y of those actions we know exactly what the future looks like
-
-    return y
-
-def unstack_buff(buff: ReplayBuff) -> Tuple[
-    np.ndarray,
-    np.ndarray, 
-    np.ndarray, 
-    np.ndarray, 
-    np.ndarray]:
-    return (
-        np.stack(buff[0], axis=0),
-        np.stack(buff[1], axis=0),
-        np.array(buff[2]),
-        np.array(buff[3]),
-        np.array(buff[4])
+def compile_model(model: Model, learning_rate=0.001) -> Model:
+    return model.compile(
+        keras.optimizers.RMSprop(learning_rate),
+        ['accuracy', 'mse']
     )
-
-def back_prop(model: Model, buff: ReplayBuff, gamma: DiscountFactor,
-    batch_size, epochs) -> None:
-    s, sprime, action, reward, ended = unstack_buff(buff)
-
-    total_observations = s.shape[0] # how many states do we have
-    rng = np.random.default_rng()
-
-    for _ in range(epochs):
-        sample = rng.choice(total_observations, batch_size) # random states we are training on
-        
-        state_sample, sprime_sample, action_sample, reward_sample, ended_sample = (
-            s[sample,:,:,:], 
-            sprime[sample,:,:,:],
-            action[sample],
-            reward[sample],
-            ended[sample]
-        )
-
-        with tf.GradientTape() as tape:
-            y_hat = model.predict(state_sample, training=True)
-
-            # Stop watching expected_rewards 
-            y = tf.stop_gradient(expected_reward(model, y_hat.numpy(), 
-                                                 sprime_sample, action_sample, reward_sample,
-                                                 ended_sample, gamma))
-
-            loss = model.loss(y, y_hat)
-
-        grads = tape.gradient(loss, model._model.trainable_weights)
-        model.optimizer.apply_gradients(zip(grads, model._model.trainable_weights))

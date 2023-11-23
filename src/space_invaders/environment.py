@@ -1,3 +1,9 @@
+import gymnasium as gym
+
+from typing import Tuple
+from space_invaders.gameState import State, StateFrames
+
+
 Action = int
 
 Reward = float
@@ -5,57 +11,25 @@ Reward = float
 Terminated = bool
 
 
-def get_end_obs(env):
+def step(
+        env: gym.Env, 
+        state: StateFrames,
+        action: Action
+    ) -> Tuple[StateFrames, Reward, Terminated]:
     """
-    @return (array): ending observation image
+    Takes an step in the environment. It will repeat the action for k steps.
     """
+    obs, reward, ended, _, _ = env.step(action)
+    state.add_observation(obs)
+    return (state.to_numpy(), reward, ended)
+
+
+def reset_env(env: gym.Env) -> Tuple[State, StateFrames]:
+    # Create array of observations and preprocess them 
+    # we use start[0] to represent one observation image
     
-    return env.unwrapped.ale.getScreenRGB()
-
-
-def get_end_reward(env):
-    """
-    @return (float): ending reward number
-    """
-
-    return env.unwrapped.ale.act(0)
-
-
-def get_episode_frame(env):
-    """
-    @return (int): ending frame number
-    """
-
-    return env.unwrapped.ale.getEpisodeFrameNumber()
-
-
-def get_data(step, env):
-    """
-    Get the data at specific step
-    @return (list): observation, reward, and info : {lives, ep. frame #, and 
-    total frame #} 
-    """
-
-    obs, reward, info = None, None, None
-    env.reset()
+    start = env.reset()
+    state = State(start[0])
+    s = state.to_numpy()
     
-    for i in range(step):
-        action = env.action_space.sample()
-        obs, reward, done, truncate , info = env.step(action)
-        if done:
-            break
-    
-    # info returns [lives, episode frame #, total frame #]
-    return obs, reward, info
-
-
-def perform_action(action, env):
-    """
-    Perform a specific action.
-    @param action (int): The action to perform.
-    @return (list) : obs, reward, done, info
-    """
-
-    obs, reward, done, truncate , info = env.step(action)
-    
-    return obs, reward, done, info
+    return [state, s]
