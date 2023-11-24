@@ -119,11 +119,11 @@ def parse_args():
     # Training Configuration
     args.add_argument('--train', type=bool, default=False)
     args.add_argument('--save_on_cancel', type=bool, default=True)
-    args.add_argument('--buff_capacity', type=int, default=6_000) # size of available data set
+    args.add_argument('--buff_capacity', type=int, default=3_000) # size of available data set
     args.add_argument('--batch_size', type=int, default=32) # when training how many samples to take
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
     args.add_argument('--epsilon', type=float, default=1) # with probability epsilon choose a random action
-    args.add_argument('--epsilon_decay', type=int, default=100_000)
+    args.add_argument('--epsilon_decay', type=int, default=10_000)
     args.add_argument('--learning_rate', type=float, default=0.00025)
 
     # Game configuration

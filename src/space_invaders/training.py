@@ -26,12 +26,12 @@ def expected_reward(
     rprime = model.predict(sprime).numpy()
 
     i = np.arange(y.shape[0]) # Index hack to access all rows in the predictions
-    a = action # The actions we are updating (columns of the predictions we will modify)
+    a = action # The actions we are updating (specific item of the predictions we will modify)
 
     t = isTerminalState == False
 
     r = reward + gamma * rprime[i, a] * t
-    y[i, a] = r # We only update the y of those actions we know exactly what the future looks like
+    y[i, a] = r # We only update the y of those actions we know what the future looks like
 
     return y
 

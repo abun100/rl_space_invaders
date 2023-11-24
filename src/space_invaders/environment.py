@@ -53,9 +53,9 @@ def update_replay_buffer(
 
 def unstack_buff(buff: ReplayBuff) -> Tuple[
         np.ndarray,
-        np.ndarray, 
-        np.ndarray, 
-        np.ndarray, 
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
         np.ndarray,
     ]:
     return (
