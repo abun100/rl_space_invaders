@@ -26,7 +26,7 @@ def run(args):
 
     epsilon = args.epsilon
     epsilon_decay = 1 / args.epsilon_decay
-    gamma: DiscountFactor = 0.3
+    gamma: DiscountFactor = 0.99
 
     # During training, we will maintain a dataset of size buff_capacity in memory
     if args.train:
@@ -124,7 +124,7 @@ def parse_args():
     args.add_argument('--epochs', type=int, default=1) # how many steps of gradient descent to perform ea time
     args.add_argument('--epsilon', type=float, default=.25) # with probability epsilon choose a random action
     args.add_argument('--epsilon_decay', type=int, default=1_000)
-    args.add_argument('--learning_rate', type=float, default=0.00025)
+    args.add_argument('--learning_rate', type=float, default=0.000015)
 
     # Game configuration
     args.add_argument('--episodes', type=int, default=1)
