@@ -83,6 +83,8 @@ def step(
     obs, reward, ended, _, _ = env.step(action)
     state.add_observation(obs)
     died = env.ale.lives() < prev_lives
+    if died:
+        reward = -15
 
     if not buff is None:
         sprime = state.to_numpy()
