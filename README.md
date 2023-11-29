@@ -15,6 +15,8 @@ Follow the instructions [here](https://code.visualstudio.com/docs/python/environ
 ```sh
 python run.py --render_mode=human
 ```
+## Training command
+python run.py --train=true --episodes=2
 
 ## Before you push changes to the remote repo make sure 
 
