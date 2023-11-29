@@ -16,7 +16,7 @@ Follow the instructions [here](https://code.visualstudio.com/docs/python/environ
 python run.py --render_mode=human
 ```
 ## Training command
-python run.py --train=true --episodes=2
+python run.py --train=true --episodes=# --epsilon=1 --epsilon_decay=10000
 
 ## Before you push changes to the remote repo make sure 
 
