@@ -25,5 +25,7 @@ python run.py --train=true --episodes=# --epsilon=1 --epsilon_decay=10000
 3. Everything works.
 4. Verify you did not unintentionally over-write the model weights.
 
-## Test Run
-![original](https://github.com/abun100/rl_space_invaders/assets/114605559/d6dd1e81-2e5b-403d-be31-01a7d00b62f6)
+## Best Run
+https://github.com/abun100/rl_space_invaders/assets/114605559/78d9a7d7-76fa-498f-9a26-414b0be58599
+
+
