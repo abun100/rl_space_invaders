@@ -21,14 +21,18 @@ python run.py --train=true --episodes=# --epsilon=1 --epsilon_decay=10000
 
 ## Optional commands
 ```
---obs_type         TYPE        Environment returns the RGB image that is displayed to human players as an observation.
+--obs_type         TYPE        Environment returns the RGB image that is displayed
+                               to human players as an observation.
 --weights          FILE        Load another tested model's weights.
 --save_on_cancel   T/F         Save the model weights when exiting training.
---buffer_capacity  INT         Memory size of stored environment variables. Larger buffer sizes can increase training time.
+--buffer_capacity  INT         Memory size of stored environment variables.
+                               Larger buffer sizes can increase training time.
 --epochs           INT         How many steps of gradient descent are wanted.
 --batch_size       INT         Determines how many training samples are choosen from the buffer.
---learning_rate    FLOAT       Determines the size of the steps the neural network takes during the optimization process.
---discount_factor  FLOAT       Determines the importance of future rewards in the agent's decision making process.
+--learning_rate    FLOAT       Determines the size of the steps the neural network
+                               takes during the optimization process.
+--discount_factor  FLOAT       Determines the importance of future rewards
+                               in the agent's decision making process.
 ```
 
 ## Before you push changes to the remote repo make sure 
