@@ -1,4 +1,5 @@
-# Final Project
+# DQN on Space Invaders
+Implementation of a Deep Q Network using keras on Space Invaders using the OpenAI Gym. Any atari game can be substituted with this code (change to the action space may be needed).
 
 ## Setup
 Create a virtual environment using virtualenv (make sure to use a python version >= 3.10) and run the following commands after activating your virtual env.
